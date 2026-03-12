@@ -1,1 +1,88 @@
-fixing the cursor positioning in /n space command and changing |> color to #424651
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Bloco de Notas Final</title>
+    <style>
+        body { background: #121212; color: #e0e0e0; font-family: 'Consolas', monospace; display: flex; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 900px; }
+        #editor { 
+            width: 100%; min-height: 500px; background: #1e1e1e; border: 1px solid #333; 
+            border-radius: 8px; padding: 20px; outline: none; white-space: pre-wrap; 
+            line-height: 1.6; font-size: 16px; color: #e0e0e0;
+        }
+        .cmd-header { color: #5dade2; font-weight: bold; background: rgba(93, 173, 226, 0.1); padding: 2px 5px; border-radius: 4px; }
+        .quote-yellow { color: #f1c40f !important; font-weight: bold; display: inline-block; }
+        .indent-tag { display: inline-block; opacity: 0.4; user-select: none; margin-right: 5px; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="editor" contenteditable="true" spellcheck="false"></div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('editor');
+
+        editor.addEventListener('keydown', (e) => {
+            // TAB Invisível
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false">|></span>');
+            }
+
+            // Aspas com Cursor no meio
+            if (e.key === '"') {
+                e.preventDefault();
+                document.execCommand('insertHTML', false, '<span class="quote-yellow">""</span>');
+                const sel = window.getSelection();
+                const range = document.createRange();
+                range.setStart(sel.focusNode, 1);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+
+            // Comando /n (A lógica do nó âncora)
+            if (e.key === 'Enter') {
+                const sel = window.getSelection();
+                const node = sel.anchorNode;
+                if (node.textContent.includes('/n')) {
+                    e.preventDefault();
+                    const range = document.createRange();
+                    const offset = node.textContent.indexOf('/n');
+                    range.setStart(node, offset);
+                    range.setEnd(node, offset + 2);
+                    range.deleteContents();
+
+                    const spanStart = document.createElement('span');
+                    spanStart.className = 'cmd-header';
+                    spanStart.textContent = '##=== ';
+                    const spanEnd = document.createElement('span');
+                    spanEnd.className = 'cmd-header';
+                    spanEnd.textContent = ' ===##';
+                    const textNode = document.createTextNode('');
+
+                    range.insertNode(spanEnd);
+                    range.insertNode(textNode);
+                    range.insertNode(spanStart);
+
+                    range.setStart(textNode, 0);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            }
+        });
+
+        // Formatação de cores automática
+        editor.addEventListener('input', () => {
+            const sel = window.getSelection();
+            if (sel.anchorNode && sel.anchorNode.parentElement.classList.contains('quote-yellow')) return;
+            localStorage.setItem('nota_final', editor.innerHTML);
+        });
+
+        window.onload = () => { editor.innerHTML = localStorage.getItem('nota_final') || ''; };
+    </script>
+</body>
+</html>
