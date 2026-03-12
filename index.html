@@ -40,43 +40,54 @@
         <div id="editor" contenteditable="true" spellcheck="false"></div>
     </div>
 
-    <script>
-        const editor = document.getElementById('editor');
-    
-        editor.addEventListener('keydown', (e) => {
-            if (e.key === 'Tab') {
+<style>
+    /* A cor amarela só aparece DENTRO de .quote-yellow */
+    .quote-yellow { color: #f1c40f !important; font-weight: bold; }
+    #editor { color: #e0e0e0; } /* Cor padrão */
+</style>
+
+<script>
+    const editor = document.getElementById('editor');
+
+    editor.addEventListener('keydown', (e) => {
+        // 1. TAB
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false" style="color:rgba(255,255,255,0.1)">|></span>&nbsp;');
+        }
+
+        // 2. ASPAS (Força a criação do span e sai dele logo após)
+        if (e.key === '"') {
+            e.preventDefault();
+            // Insere as aspas
+            document.execCommand('insertHTML', false, '<span class="quote-yellow">""</span>');
+            
+            // Move o cursor para dentro (posição 1)
+            const sel = window.getSelection();
+            const range = document.createRange();
+            range.setStart(sel.focusNode, 1);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+
+        // 3. /n (Executa ao pressionar Enter)
+        if (e.key === 'Enter') {
+            if (editor.innerText.includes('/n')) {
                 e.preventDefault();
-                document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false">|></span>&nbsp;');
-            }
-    
-            if (e.key === '"') {
-                e.preventDefault();
-                document.execCommand('insertHTML', false, '<span class="quote-yellow">""</span>');
-                const sel = window.getSelection();
+                editor.innerHTML = editor.innerHTML.replace('/n', '<span class="cmd-header">##=== </span><span id="target">&nbsp;</span><span class="cmd-header"> ===##</span>');
+                
+                // Move o cursor para o "target"
+                const target = document.getElementById('target');
                 const range = document.createRange();
-                range.setStart(sel.focusNode, sel.focusOffset - 1);
+                range.selectNodeContents(target);
                 range.collapse(true);
+                const sel = window.getSelection();
                 sel.removeAllRanges();
                 sel.addRange(range);
             }
-        });
-    
-        editor.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                if (editor.innerText.includes('/n')) {
-                    editor.innerHTML = editor.innerHTML.replace('/n', '');
-                    document.execCommand('insertHTML', false, '<span class="cmd-header">##=== </span>&nbsp;<span class="cmd-header">===##</span>&nbsp;');
-                }
-            }
-        });
-    
-        editor.addEventListener('input', () => {
-            localStorage.setItem('nota_v4', editor.innerHTML);
-        });
-    
-        window.onload = () => {
-            editor.innerHTML = localStorage.getItem('nota_v4') || '';
-        };
-    </script>
+        }
+    });
+</script>
 </body>
 </html>
