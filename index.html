@@ -32,52 +32,71 @@
         <div id="editor" contenteditable="true" spellcheck="false"></div>
     </div>
 
-      <script>
+    <script>
         const editor = document.getElementById('editor');
     
-        // Função que força o cursor para um lugar específico dentro de um elemento
-        function setCursor(node, offset) {
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.setStart(node, offset);
-            range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
+        // Função para inserir texto mantendo o controle do cursor
+        function insertAtCursor(html, offset = 0) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = html;
+            const frag = document.createDocumentFragment();
+            let node, lastNode;
+            while ((node = tempDiv.firstChild)) lastNode = frag.appendChild(node);
+            
+            range.insertNode(frag);
+            
+            // Coloca o cursor dentro do elemento inserido, no offset definido
+            if (lastNode) {
+                const newRange = document.createRange();
+                newRange.setStart(lastNode.childNodes[0] || lastNode, offset);
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            }
         }
     
         editor.addEventListener('keydown', (e) => {
-            // TAB para identação
+            // TAB
             if (e.key === 'Tab') {
                 e.preventDefault();
-                document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false">|></span>&nbsp;');
+                insertAtCursor('<span class="indent-tag" contenteditable="false">|></span>&nbsp;');
             }
-    
-            // Aspas com cursor no meio
+            
+            // Aspas
             if (e.key === '"') {
                 e.preventDefault();
-                document.execCommand('insertHTML', false, '<span class="quote-yellow">""</span>');
-                // Move o cursor para dentro das aspas
-                const sel = window.getSelection();
-                const node = sel.focusNode;
-                setCursor(node, 1); // Posição 1 (entre as aspas)
+                // Inserimos aspas amarelas e movemos o cursor para a posição 1 (meio)
+                insertAtCursor('<span class="quote-yellow">""</span>', 1);
             }
         });
     
-        editor.addEventListener('keyup', (e) => {
-            if (e.key === ' ' || e.key === 'Enter') {
-                let html = editor.innerHTML;
-                
-                if (html.includes('/n')) {
-                    // Substitui pelo cabeçalho
-                    const novoHTML = html.replace('/n', '<span class="cmd-header">##=== </span><span id="target"></span><span class="cmd-header"> ===##</span>');
-                    editor.innerHTML = novoHTML;
-                    
-                    // Move o cursor para o span "target" que criamos no meio
-                    const target = document.getElementById('target');
-                    setCursor(target, 0);
+        editor.addEventListener('keydown', (e) => {
+            // Comando /n (Detecta ao dar espaço)
+            if (e.key === ' ') {
+                const selection = window.getSelection();
+                const node = selection.anchorNode;
+                if (node.textContent.includes('/n')) {
+                    e.preventDefault();
+                    node.textContent = node.textContent.replace('/n', '');
+                    // Insere sem espaços extras entre o == e a marcação
+                    insertAtCursor('<span class="cmd-header">##===</span>&nbsp;<span class="cmd-header">===##</span>&nbsp;');
                 }
             }
         });
-    </script>
+    
+        // Salvar no navegador
+        editor.addEventListener('input', () => {
+            localStorage.setItem('nota_final', editor.innerHTML);
+        });
+    
+        window.onload = () => {
+            editor.innerHTML = localStorage.getItem('nota_final') || '';
+        };
+</script>
 </body>
 </html>
