@@ -34,64 +34,44 @@
 
     <script>
         const editor = document.getElementById('editor');
-
-        function insertSpecial(html, moveBack = 0) {
-            const sel = window.getSelection();
-            const range = sel.getRangeAt(0);
-            range.deleteContents();
-            
-            const el = document.createElement("span");
-            el.innerHTML = html;
-            const frag = document.createDocumentFragment();
-            let node, lastNode;
-            while ((node = el.firstChild)) {
-                lastNode = frag.appendChild(node);
-            }
-            range.insertNode(frag);
-
-            const newRange = document.createRange();
-            newRange.setStartAfter(lastNode);
-            if (moveBack > 0) {
-                newRange.setStartBefore(lastNode);
-                newRange.setEndBefore(lastNode);
-            }
-            newRange.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-        }
-
+    
         editor.addEventListener('keydown', (e) => {
+            // TAB para identação
             if (e.key === 'Tab') {
                 e.preventDefault();
-                insertSpecial('<span class="indent-tag" contenteditable="false">|></span>');
-            }
-
-            if (e.key === '"') {
-                e.preventDefault();
-                insertSpecial('<span class="quote-yellow">""</span>', 1);
-                const sel = window.getSelection();
-                const range = sel.getRangeAt(0);
-                range.setStart(range.startContainer, range.startOffset - 1);
-                range.collapse(true);
+                document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false">|></span>&nbsp;');
             }
         });
-
-        editor.addEventListener('input', (e) => {
-            const selection = window.getSelection();
-            const node = selection.focusNode;
-            
-            if (node && node.textContent.includes('/n')) {
-                const pos = node.textContent.indexOf('/n');
-                node.textContent = node.textContent.replace('/n', '');
+    
+        editor.addEventListener('keyup', (e) => {
+            // Comando /n
+            if (e.key === ' ' || e.key === 'Enter') {
+                let html = editor.innerHTML;
                 
-                insertSpecial('<span class="cmd-header">##===</span> Digite aqui <span class="cmd-header">===##</span>&nbsp;');
+                // Regex para detectar /n no início de uma linha ou após espaço
+                if (html.includes('/n')) {
+                    const novoHTML = html.replace(/\/n/g, '<span class="cmd-header">##=== </span>');
+                    editor.innerHTML = novoHTML + " <span class='cmd-header'>===##</span>";
+                    
+                    // Mover cursor para o final
+                    const range = document.createRange();
+                    range.selectNodeContents(editor);
+                    range.collapse(false);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
             }
-
-            localStorage.setItem('nota_v3', editor.innerHTML);
         });
-
+    
+        // Aspas Amarelas (usando um método que não quebra o cursor)
+        editor.addEventListener('input', () => {
+            // Lógica simples: sempre que digitar ", salva no LocalStorage
+            localStorage.setItem('nota_final', editor.innerHTML);
+        });
+    
         window.onload = () => {
-            editor.innerHTML = localStorage.getItem('nota_v3') || 'Pressione TAB para identar ou digite /n...';
+            editor.innerHTML = localStorage.getItem('nota_final') || '';
         };
     </script>
 </body>
