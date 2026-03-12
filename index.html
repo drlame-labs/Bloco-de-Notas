@@ -98,19 +98,23 @@
         });
     
         editor.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && editor.innerText.includes('/n')) {
+            if (e.key === '"') {
                 e.preventDefault();
-                editor.innerHTML = editor.innerHTML.replace('/n', '<span class="cmd-header">##=== </span><span class="cmd-header"> ===##</span>');
-                const range = document.createRange();
-                range.setStart(editor.childNodes[1], 1); 
+                
+                const span = document.createElement('span');
+                span.className = 'quote-yellow';
+                span.innerHTML = '""';
+                
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                range.insertNode(span);
+                
+                range.setStart(span.firstChild, 1);
                 range.collapse(true);
-                window.getSelection().addRange(range);
+                selection.removeAllRanges();
+                selection.addRange(range);
             }
         });
-    
-        window.onload = () => {
-            editor.innerHTML = localStorage.getItem('nota_final') || '';
-        };
     </script>
 </body>
 </html>
