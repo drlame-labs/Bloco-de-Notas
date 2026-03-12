@@ -2,17 +2,20 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Bloco de Notas Personalizado</title>
+    <title>Meu Bloco de Notas</title>
     <style>
-        body { background: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .container { width: 100%; max-width: 800px; }
+        body { background: #121212; color: #e0e0e0; font-family: 'Consolas', monospace; display: flex; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 900px; }
         #titulo { width: 100%; background: #1e1e1e; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 8px; font-size: 1.2rem; margin-bottom: 20px; outline: none; }
-        #editor { width: 100%; min-height: 500px; background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 20px; outline: none; white-space: pre-wrap; line-height: 1.6; font-family: monospace; }
         
-        /* Estilos específicos que você pediu */
-        .cmd-header { color: #5dade2; font-weight: bold; } /* ##=== */
-        .quote-yellow { color: #f1c40f; }                /* "Texto" */
-        .indent-mark { opacity: 0.1; color: #fff; user-select: none; } /* |> */
+        #editor { 
+            width: 100%; min-height: 500px; background: #1e1e1e; border: 1px solid #333; border-radius: 8px; 
+            padding: 20px; outline: none; white-space: pre-wrap; line-height: 1.6; font-size: 16px;
+        }
+
+        .cmd-header { color: #5dade2; font-weight: bold; background: rgba(93, 173, 226, 0.1); padding: 2px 5px; border-radius: 4px; }
+        .quote-yellow { color: #f1c40f; font-weight: bold; }
+        .indent-mark { color: rgba(255, 255, 255, 0.1); font-weight: bold; user-select: all; }
     </style>
 </head>
 <body>
@@ -22,48 +25,71 @@
     </div>
 
     <script>
-    const editor = document.getElementById('editor');
-    const titulo = document.getElementById('titulo');
-    
-    // 1. Atalhos de Teclado
-    editor.addEventListener('keydown', (e) => {
-        // Identação com Tab
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            document.execCommand('insertHTML', false, '<span class="indent-mark">|></span>&nbsp;');
+        const editor = document.getElementById('editor');
+
+        function insertAtCursor(html) {
+            const sel = window.getSelection();
+            if (sel.getRangeAt && sel.rangeCount) {
+                const range = sel.getRangeAt(0);
+                range.deleteContents();
+                const el = document.createElement("div");
+                el.innerHTML = html;
+                const frag = document.createDocumentFragment();
+                let node, lastNode;
+                while ((node = el.firstChild)) {
+                    lastNode = frag.appendChild(node);
+                }
+                range.insertNode(frag);
+                if (lastNode) {
+                    range.setStartAfter(lastNode);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            }
         }
-    });
-    
-    // 2. Processamento de Texto e Comandos
-    editor.addEventListener('input', () => {
-        let content = editor.innerHTML;
-    
-        // Comando /n
-        if (content.includes('/n&nbsp;')) {
-            const header = '<span class="cmd-header">##=== </span> TÍTULO <span class="cmd-header"> ===##</span>&nbsp;';
-            editor.innerHTML = content.replace('/n&nbsp;', header);
-            focarNoFinal();
-        }
-    
-        // Salvar Automaticamente
-        localStorage.setItem('nota_v1', editor.innerHTML);
-        localStorage.setItem('titulo_v1', titulo.value);
-    });
-    
-    // Carregar ao abrir
-    window.onload = () => {
-        editor.innerHTML = localStorage.getItem('nota_v1') || 'Digite /n para começar...';
-        titulo.value = localStorage.getItem('titulo_v1') || '';
-    };
-    
-    function focarNoFinal() {
-        const range = document.createRange();
-        const sel = window.getSelection();
-        range.selectNodeContents(editor);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }
+
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                insertAtCursor('<span class="indent-mark">|></span>&nbsp;');
+            }
+
+            if (e.key === '"') {
+                e.preventDefault();
+                insertAtCursor('<span class="quote-yellow">"</span><span class="quote-yellow">"</span>');
+                
+                const sel = window.getSelection();
+                const range = sel.getRangeAt(0);
+                range.setStart(sel.anchorNode.previousSibling, 1);
+                range.collapse(true);
+            }
+        });
+
+        editor.addEventListener('input', (e) => {
+            const content = editor.innerText;
+
+            if (editor.innerHTML.includes('/n')) {
+                const selection = window.getSelection();
+                const range = selection.getRangeAt(0);
+                
+                editor.innerHTML = editor.innerHTML.replace(/\/n/g, 
+                    '<span class="cmd-header">##===</span> Digite aqui <span class="cmd-header">===##</span>&nbsp;');
+                
+                const newRange = document.createRange();
+                newRange.selectNodeContents(editor);
+                newRange.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            }
+
+            localStorage.setItem('minha_nota_v2', editor.innerHTML);
+        });
+
+        window.onload = () => {
+            const salva = localStorage.getItem('minha_nota_v2');
+            if(salva) editor.innerHTML = salva;
+        };
     </script>
 </body>
 </html>
