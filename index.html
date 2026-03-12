@@ -98,21 +98,24 @@
         });
     
         editor.addEventListener('keydown', (e) => {
-            if (e.key === '"') {
+            if (e.key === 'Tab') {
                 e.preventDefault();
-                
-                const span = document.createElement('span');
-                span.className = 'quote-yellow';
-                span.innerHTML = '""';
-                
-                const selection = window.getSelection();
-                const range = selection.getRangeAt(0);
-                range.insertNode(span);
-                
-                range.setStart(span.firstChild, 1);
-                range.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(range);
+                document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false">|></span>&nbsp;');
+            }
+        });
+        
+        editor.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                const sel = window.getSelection();
+                if (editor.innerText.includes('/n')) {
+                    editor.innerHTML = editor.innerHTML.replace('/n', '<span class="cmd-header">##=== Digite aqui ===##</span>');
+                    
+                    const range = document.createRange();
+                    range.selectNodeContents(editor);
+                    range.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
             }
         });
     </script>
