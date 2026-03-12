@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Bloco de Notas Pro</title>
+    <style>
+        /* CSS: Definindo o Modo Escuro e o Layout */
+        body {
+            background-color: #121212; /* Fundo quase preto */
+            color: #e0e0e0;           /* Texto cinza claro */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container { width: 90%; max-width: 900px; }
+
+        /* Estilo dos Inputs (Título e Botões) */
+        input#titulo {
+            width: 100%;
+            background: #1e1e1e;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .toolbar { margin-bottom: 10px; color: #3498db; font-size: 0.9rem; }
+        .toolbar span { cursor: pointer; margin-right: 15px; font-weight: bold; }
+
+        /* Área de Digitação Principal */
+        #editor {
+            width: 100%;
+            min-height: 500px;
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 20px;
+            outline: none;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            overflow-y: auto;
+        }
+
+        /* Estilização das suas funções específicas */
+        .header-cmd { color: #5dade2; font-weight: bold; } /* Azul para o ##=== */
+        .quote-yellow { color: #f1c40f; }                /* Amarelo para aspas */
+        .indent-mark { color: rgba(255,255,255,0.08); }  /* Quase invisível */
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <input type="text" id="titulo" placeholder="Título da Nota">
+        
+        <div class="toolbar">
+            <span>+ Nova Nota</span>
+            <span>📥 Importar Documentos</span>
+        </div>
+
+        <div id="editor" contenteditable="true" placeholder="Conteúdo da Nota..."></div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('editor');
+
+        editor.addEventListener('keydown', (e) => {
+            // Atalho Tab para o "|>"
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                document.execCommand('insertHTML', false, '<span class="indent-mark">|></span>&nbsp;');
+            }
+        });
+
+        editor.addEventListener('input', (e) => {
+            let html = editor.innerHTML;
+
+            // 1. Detectar /n e transformar
+            if (html.includes('/n&nbsp;')) {
+                const replacement = '<span class="header-cmd">##=== </span> Título <span class="header-cmd"> ===##</span>&nbsp;';
+                editor.innerHTML = html.replace('/n&nbsp;', replacement);
+                posicionarCursorNoFinal();
+            }
+
+            // 2. Colorir aspas automaticamente (Lógica simples)
+            // Nota: Para não quebrar o cursor, a lógica de cores funciona melhor ao processar blocos.
+        });
+
+        function posicionarCursorNoFinal() {
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(editor);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    </script>
+</body>
+</html>
