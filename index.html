@@ -45,40 +45,33 @@
     #editor { color: #e0e0e0; } 
 </style>
 
-<script>
-    const editor = document.getElementById('editor');
-
-    editor.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false" style="color:rgba(255,255,255,0.1)">|></span>&nbsp;');
-        }
-
-        if (e.key === '"') {
-            e.preventDefault();
-            document.execCommand('insertHTML', false, '<span class="quote-yellow">""</span>');
+    <script>
+        const editor = document.getElementById('editor');
+    
+        function formatarEditor() {
+            let text = editor.innerText;
+            
+            let formatted = text.replace(/"([^"]*)"/g, '<span class="quote-yellow">"$1"</span>');
             
             const sel = window.getSelection();
-            const range = document.createRange();
-            range.setStart(sel.focusNode, 1);
-            range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
+            const offset = sel.focusOffset;
+            
+            editor.innerHTML = formatted;
+            
         }
-
-            if (e.key === '"') {
+    
+        editor.addEventListener('input', (e) => {
+            formatarEditor();
+            
+            localStorage.setItem('nota_final', editor.innerHTML);
+        });
+    
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && editor.innerText.includes('/n')) {
                 e.preventDefault();
-                document.execCommand('insertHTML', false, '<span class="quote-yellow">""</span><span id="reset-color"></span>');
-                
-                const sel = window.getSelection();
-                const range = document.createRange();
-                range.setStart(sel.focusNode.previousSibling.childNodes[0], 1);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
+                editor.innerHTML = editor.innerHTML.replace('/n', '<span class="cmd-header">##=== Digite aqui ===##</span>');
             }
-        }
-    });
-</script>
+        });
+    </script>
 </body>
 </html>
