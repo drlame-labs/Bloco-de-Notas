@@ -14,7 +14,16 @@
         }
 
         .cmd-header { color: #5dade2; font-weight: bold; background: rgba(93, 173, 226, 0.1); padding: 2px 5px; border-radius: 4px; }
-        .quote-yellow { color: #f1c40f; font-weight: bold; }
+        .quote-yellow { 
+            color: #f1c40f !important; 
+            font-weight: bold; 
+            display: inline-block;
+        }
+        
+        /* Isso remove a cor caso você tente forçar em outros lugares */
+        #editor {
+            color: #e0e0e0; /* Cor padrão do resto do texto */
+        }
         
         .indent-tag { 
             display: inline-block;
@@ -77,9 +86,11 @@
     
         editor.addEventListener('keydown', (e) => {
             // Comando /n (Detecta ao dar espaço)
-            if (e.key === ' ') {
-                const selection = window.getSelection();
-                const node = selection.anchorNode;
+            if (e.key === '"') {
+                e.preventDefault();
+                // Inserimos um container amarelo que já contém o cursor no meio
+                insertAtCursor('<span class="quote-yellow">""</span>', 1);
+            }
                 if (node.textContent.includes('/n')) {
                     e.preventDefault();
                     node.textContent = node.textContent.replace('/n', '');
