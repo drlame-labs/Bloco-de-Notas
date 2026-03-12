@@ -2,96 +2,67 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Bloco de Notas Pro</title>
+    <title>Bloco de Notas Personalizado</title>
     <style>
-        /* CSS: Definindo o Modo Escuro e o Layout */
-        body {
-            background-color: #121212; /* Fundo quase preto */
-            color: #e0e0e0;           /* Texto cinza claro */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container { width: 90%; max-width: 900px; }
-
-        /* Estilo dos Inputs (Título e Botões) */
-        input#titulo {
-            width: 100%;
-            background: #1e1e1e;
-            border: 1px solid #333;
-            color: white;
-            padding: 12px;
-            border-radius: 5px;
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-        }
-
-        .toolbar { margin-bottom: 10px; color: #3498db; font-size: 0.9rem; }
-        .toolbar span { cursor: pointer; margin-right: 15px; font-weight: bold; }
-
-        /* Área de Digitação Principal */
-        #editor {
-            width: 100%;
-            min-height: 500px;
-            background: #1e1e1e;
-            border: 1px solid #333;
-            border-radius: 5px;
-            padding: 20px;
-            outline: none;
-            white-space: pre-wrap;
-            line-height: 1.6;
-            overflow-y: auto;
-        }
-
-        /* Estilização das suas funções específicas */
-        .header-cmd { color: #5dade2; font-weight: bold; } /* Azul para o ##=== */
-        .quote-yellow { color: #f1c40f; }                /* Amarelo para aspas */
-        .indent-mark { color: rgba(255,255,255,0.08); }  /* Quase invisível */
+        body { background: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 800px; }
+        #titulo { width: 100%; background: #1e1e1e; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 8px; font-size: 1.2rem; margin-bottom: 20px; outline: none; }
+        #editor { width: 100%; min-height: 500px; background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 20px; outline: none; white-space: pre-wrap; line-height: 1.6; font-family: monospace; }
+        
+        /* Estilos específicos que você pediu */
+        .cmd-header { color: #5dade2; font-weight: bold; } /* ##=== */
+        .quote-yellow { color: #f1c40f; }                /* "Texto" */
+        .indent-mark { opacity: 0.1; color: #fff; user-select: none; } /* |> */
     </style>
 </head>
 <body>
-
     <div class="container">
         <input type="text" id="titulo" placeholder="Título da Nota">
-        
-        <div class="toolbar">
-            <span>+ Nova Nota</span>
-            <span>📥 Importar Documentos</span>
-        </div>
-
-        <div id="editor" contenteditable="true" placeholder="Conteúdo da Nota..."></div>
+        <div id="editor" contenteditable="true" spellcheck="false"></div>
     </div>
 
     <script>
         const editor = document.getElementById('editor');
+        const titulo = document.getElementById('titulo');
 
+        // 1. Identação com TAB (|>)
         editor.addEventListener('keydown', (e) => {
-            // Atalho Tab para o "|>"
             if (e.key === 'Tab') {
                 e.preventDefault();
-                document.execCommand('insertHTML', false, '<span class="indent-mark">|></span>&nbsp;');
+                const sel = window.getSelection();
+                const range = sel.getRangeAt(0);
+                const span = document.createElement("span");
+                span.className = "indent-mark";
+                span.innerText = "|>";
+                range.insertNode(span);
+                range.insertNode(document.createTextNode(" "));
+                range.collapse(false);
             }
         });
 
-        editor.addEventListener('input', (e) => {
+        // 2. Comando /n e Aspas Amarelas
+        editor.addEventListener('input', () => {
             let html = editor.innerHTML;
 
-            // 1. Detectar /n e transformar
+            // Transforma /n
             if (html.includes('/n&nbsp;')) {
-                const replacement = '<span class="header-cmd">##=== </span> Título <span class="header-cmd"> ===##</span>&nbsp;';
-                editor.innerHTML = html.replace('/n&nbsp;', replacement);
-                posicionarCursorNoFinal();
+                html = html.replace('/n&nbsp;', '<span class="cmd-header">##=== </span> TEXTO <span class="cmd-header"> ===##</span>&nbsp;');
+                editor.innerHTML = html;
+                focarNoFinal();
             }
 
-            // 2. Colorir aspas automaticamente (Lógica simples)
-            // Nota: Para não quebrar o cursor, a lógica de cores funciona melhor ao processar blocos.
+            // Salva no navegador (LocalStorage)
+            localStorage.setItem('nota_salva', editor.innerHTML);
+            localStorage.setItem('titulo_salvo', titulo.value);
         });
 
-        function posicionarCursorNoFinal() {
+        // Carregar dados ao abrir
+        window.onload = () => {
+            editor.innerHTML = localStorage.getItem('nota_salva') || 'Digite /n para cabeçalho...';
+            titulo.value = localStorage.getItem('titulo_salvo') || '';
+        };
+
+        function focarNoFinal() {
             const range = document.createRange();
             const sel = window.getSelection();
             range.selectNodeContents(editor);
