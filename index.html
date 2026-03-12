@@ -22,54 +22,48 @@
     </div>
 
     <script>
-        const editor = document.getElementById('editor');
-        const titulo = document.getElementById('titulo');
-
-        // 1. Identação com TAB (|>)
-        editor.addEventListener('keydown', (e) => {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                const sel = window.getSelection();
-                const range = sel.getRangeAt(0);
-                const span = document.createElement("span");
-                span.className = "indent-mark";
-                span.innerText = "|>";
-                range.insertNode(span);
-                range.insertNode(document.createTextNode(" "));
-                range.collapse(false);
-            }
-        });
-
-        // 2. Comando /n e Aspas Amarelas
-        editor.addEventListener('input', () => {
-            let html = editor.innerHTML;
-
-            // Transforma /n
-            if (html.includes('/n&nbsp;')) {
-                html = html.replace('/n&nbsp;', '<span class="cmd-header">##=== </span> TEXTO <span class="cmd-header"> ===##</span>&nbsp;');
-                editor.innerHTML = html;
-                focarNoFinal();
-            }
-
-            // Salva no navegador (LocalStorage)
-            localStorage.setItem('nota_salva', editor.innerHTML);
-            localStorage.setItem('titulo_salvo', titulo.value);
-        });
-
-        // Carregar dados ao abrir
-        window.onload = () => {
-            editor.innerHTML = localStorage.getItem('nota_salva') || 'Digite /n para cabeçalho...';
-            titulo.value = localStorage.getItem('titulo_salvo') || '';
-        };
-
-        function focarNoFinal() {
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.selectNodeContents(editor);
-            range.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(range);
+    const editor = document.getElementById('editor');
+    const titulo = document.getElementById('titulo');
+    
+    // 1. Atalhos de Teclado
+    editor.addEventListener('keydown', (e) => {
+        // Identação com Tab
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            document.execCommand('insertHTML', false, '<span class="indent-mark">|></span>&nbsp;');
         }
+    });
+    
+    // 2. Processamento de Texto e Comandos
+    editor.addEventListener('input', () => {
+        let content = editor.innerHTML;
+    
+        // Comando /n
+        if (content.includes('/n&nbsp;')) {
+            const header = '<span class="cmd-header">##=== </span> TÍTULO <span class="cmd-header"> ===##</span>&nbsp;';
+            editor.innerHTML = content.replace('/n&nbsp;', header);
+            focarNoFinal();
+        }
+    
+        // Salvar Automaticamente
+        localStorage.setItem('nota_v1', editor.innerHTML);
+        localStorage.setItem('titulo_v1', titulo.value);
+    });
+    
+    // Carregar ao abrir
+    window.onload = () => {
+        editor.innerHTML = localStorage.getItem('nota_v1') || 'Digite /n para começar...';
+        titulo.value = localStorage.getItem('titulo_v1') || '';
+    };
+    
+    function focarNoFinal() {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
     </script>
 </body>
 </html>
