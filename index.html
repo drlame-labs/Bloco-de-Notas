@@ -32,8 +32,18 @@
         <div id="editor" contenteditable="true" spellcheck="false"></div>
     </div>
 
-    <script>
+      <script>
         const editor = document.getElementById('editor');
+    
+        // Função que força o cursor para um lugar específico dentro de um elemento
+        function setCursor(node, offset) {
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.setStart(node, offset);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
     
         editor.addEventListener('keydown', (e) => {
             // TAB para identação
@@ -41,38 +51,33 @@
                 e.preventDefault();
                 document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false">|></span>&nbsp;');
             }
-        });
     
-        editor.addEventListener('keyup', (e) => {
-            // Comando /n
-            if (e.key === ' ' || e.key === 'Enter') {
-                let html = editor.innerHTML;
-                
-                // Regex para detectar /n no início de uma linha ou após espaço
-                if (html.includes('/n')) {
-                    const novoHTML = html.replace(/\/n/g, '<span class="cmd-header">##=== </span>');
-                    editor.innerHTML = novoHTML + " <span class='cmd-header'>===##</span>";
-                    
-                    // Mover cursor para o final
-                    const range = document.createRange();
-                    range.selectNodeContents(editor);
-                    range.collapse(false);
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                }
+            // Aspas com cursor no meio
+            if (e.key === '"') {
+                e.preventDefault();
+                document.execCommand('insertHTML', false, '<span class="quote-yellow">""</span>');
+                // Move o cursor para dentro das aspas
+                const sel = window.getSelection();
+                const node = sel.focusNode;
+                setCursor(node, 1); // Posição 1 (entre as aspas)
             }
         });
     
-        // Aspas Amarelas (usando um método que não quebra o cursor)
-        editor.addEventListener('input', () => {
-            // Lógica simples: sempre que digitar ", salva no LocalStorage
-            localStorage.setItem('nota_final', editor.innerHTML);
+        editor.addEventListener('keyup', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                let html = editor.innerHTML;
+                
+                if (html.includes('/n')) {
+                    // Substitui pelo cabeçalho
+                    const novoHTML = html.replace('/n', '<span class="cmd-header">##=== </span><span id="target"></span><span class="cmd-header"> ===##</span>');
+                    editor.innerHTML = novoHTML;
+                    
+                    // Move o cursor para o span "target" que criamos no meio
+                    const target = document.getElementById('target');
+                    setCursor(target, 0);
+                }
+            }
         });
-    
-        window.onload = () => {
-            editor.innerHTML = localStorage.getItem('nota_final') || '';
-        };
     </script>
 </body>
 </html>
