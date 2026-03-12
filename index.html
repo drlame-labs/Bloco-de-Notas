@@ -27,10 +27,11 @@
         .indent-tag { 
             display: inline-block;
             content: "";
-            color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.05);
             font-weight: bold;
             user-select: all; 
-            margin-right: 5px;
+            margin-right: 2px;
+            opacity: 0.2;
         }
     </style>
 </head>
@@ -97,49 +98,45 @@
             localStorage.setItem('nota_final', editor.innerHTML);
         });
     
-     const editor = document.getElementById('editor');
+        const editor2 = document.getElementById('editor');
 
-        editor.addEventListener('keydown', (e) => {
+        editor2.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
                 e.preventDefault();
-                document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false" style="opacity: 0.3; user-select: none;">|></span>&nbsp;');
+                document.execCommand('insertHTML', false, '<span class="indent-tag">|></span>');
             }
         });
         
-        editor.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
+        editor2.addEventListener('keydown', (e) => {
+            if (e.key === ' ') {
                 const sel = window.getSelection();
                 const node = sel.anchorNode;
                 
-                if (node.textContent.includes('/n')) {
+                if (node && node.textContent.includes('/n')) {
                     e.preventDefault();
                     
-                    const titulo = prompt("Digite o título para o cabeçalho:");
-                    if (titulo) {
-                        const span = document.createElement('span');
-                        span.className = 'cmd-header';
-                        span.innerHTML = `##=== ${titulo} ===##`;
-                        
-                        node.textContent = node.textContent.replace('/n', '');
-                        const range = sel.getRangeAt(0);
-                        range.insertNode(span);
-                        
-                        range.setStartAfter(span);
-                        range.collapse(true);
-                    }
-                }
-            }
-        });
-        
-        editor.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') {
-                const sel = window.getSelection();
-                if (editor.innerText.includes('/n')) {
-                    editor.innerHTML = editor.innerHTML.replace('/n', '<span class="cmd-header">##=== Digite aqui ===##</span>');
+                    // Remove o /n
+                    const text = node.textContent.replace('/n', '');
+                    node.textContent = text;
                     
-                    const range = document.createRange();
-                    range.selectNodeContents(editor);
-                    range.collapse(false);
+                    // Cria o header
+                    const span = document.createElement('span');
+                    span.className = 'cmd-header';
+                    span.textContent = '##=== ';
+                    
+                    const range = sel.getRangeAt(0);
+                    range.insertNode(span);
+                    
+                    // Cria o fechamento
+                    const spanClose = document.createElement('span');
+                    spanClose.className = 'cmd-header';
+                    spanClose.textContent = ' ===##';
+                    
+                    range.setStartAfter(span);
+                    range.insertNode(spanClose);
+                    range.setStartBetween(span, spanClose);
+                    range.collapse(true);
+                    
                     sel.removeAllRanges();
                     sel.addRange(range);
                 }
