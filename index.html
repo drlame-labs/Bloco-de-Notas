@@ -97,11 +97,37 @@
             localStorage.setItem('nota_final', editor.innerHTML);
         });
     
+     const editor = document.getElementById('editor');
+
         editor.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
-                e.preventDefault(); 
+                e.preventDefault();
+                document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false" style="opacity: 0.3; user-select: none;">|></span>&nbsp;');
+            }
+        });
+        
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const sel = window.getSelection();
+                const node = sel.anchorNode;
                 
-                document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false">|></span>&nbsp;');
+                if (node.textContent.includes('/n')) {
+                    e.preventDefault();
+                    
+                    const titulo = prompt("Digite o título para o cabeçalho:");
+                    if (titulo) {
+                        const span = document.createElement('span');
+                        span.className = 'cmd-header';
+                        span.innerHTML = `##=== ${titulo} ===##`;
+                        
+                        node.textContent = node.textContent.replace('/n', '');
+                        const range = sel.getRangeAt(0);
+                        range.insertNode(span);
+                        
+                        range.setStartAfter(span);
+                        range.collapse(true);
+                    }
+                }
             }
         });
         
