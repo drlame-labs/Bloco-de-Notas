@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Meu Bloco de Notas</title>
+    <title>Bloco de Notas v3</title>
     <style>
         body { background: #121212; color: #e0e0e0; font-family: 'Consolas', monospace; display: flex; justify-content: center; padding: 20px; }
         .container { width: 100%; max-width: 900px; }
@@ -15,7 +15,15 @@
 
         .cmd-header { color: #5dade2; font-weight: bold; background: rgba(93, 173, 226, 0.1); padding: 2px 5px; border-radius: 4px; }
         .quote-yellow { color: #f1c40f; font-weight: bold; }
-        .indent-mark { color: rgba(255, 255, 255, 0.1); font-weight: bold; user-select: all; }
+        
+        .indent-tag { 
+            display: inline-block;
+            content: "";
+            color: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+            user-select: all; 
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -27,68 +35,63 @@
     <script>
         const editor = document.getElementById('editor');
 
-        function insertAtCursor(html) {
+        function insertSpecial(html, moveBack = 0) {
             const sel = window.getSelection();
-            if (sel.getRangeAt && sel.rangeCount) {
-                const range = sel.getRangeAt(0);
-                range.deleteContents();
-                const el = document.createElement("div");
-                el.innerHTML = html;
-                const frag = document.createDocumentFragment();
-                let node, lastNode;
-                while ((node = el.firstChild)) {
-                    lastNode = frag.appendChild(node);
-                }
-                range.insertNode(frag);
-                if (lastNode) {
-                    range.setStartAfter(lastNode);
-                    range.collapse(true);
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                }
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            
+            const el = document.createElement("span");
+            el.innerHTML = html;
+            const frag = document.createDocumentFragment();
+            let node, lastNode;
+            while ((node = el.firstChild)) {
+                lastNode = frag.appendChild(node);
             }
+            range.insertNode(frag);
+
+            const newRange = document.createRange();
+            newRange.setStartAfter(lastNode);
+            if (moveBack > 0) {
+                newRange.setStartBefore(lastNode);
+                newRange.setEndBefore(lastNode);
+            }
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
         }
 
         editor.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
                 e.preventDefault();
-                insertAtCursor('<span class="indent-mark">|></span>&nbsp;');
+                insertSpecial('<span class="indent-tag" contenteditable="false">|></span>');
             }
 
             if (e.key === '"') {
                 e.preventDefault();
-                insertAtCursor('<span class="quote-yellow">"</span><span class="quote-yellow">"</span>');
-                
+                insertSpecial('<span class="quote-yellow">""</span>', 1);
                 const sel = window.getSelection();
                 const range = sel.getRangeAt(0);
-                range.setStart(sel.anchorNode.previousSibling, 1);
+                range.setStart(range.startContainer, range.startOffset - 1);
                 range.collapse(true);
             }
         });
 
         editor.addEventListener('input', (e) => {
-            const content = editor.innerText;
-
-            if (editor.innerHTML.includes('/n')) {
-                const selection = window.getSelection();
-                const range = selection.getRangeAt(0);
+            const selection = window.getSelection();
+            const node = selection.focusNode;
+            
+            if (node && node.textContent.includes('/n')) {
+                const pos = node.textContent.indexOf('/n');
+                node.textContent = node.textContent.replace('/n', '');
                 
-                editor.innerHTML = editor.innerHTML.replace(/\/n/g, 
-                    '<span class="cmd-header">##===</span> Digite aqui <span class="cmd-header">===##</span>&nbsp;');
-                
-                const newRange = document.createRange();
-                newRange.selectNodeContents(editor);
-                newRange.collapse(false);
-                selection.removeAllRanges();
-                selection.addRange(newRange);
+                insertSpecial('<span class="cmd-header">##===</span> Digite aqui <span class="cmd-header">===##</span>&nbsp;');
             }
 
-            localStorage.setItem('minha_nota_v2', editor.innerHTML);
+            localStorage.setItem('nota_v3', editor.innerHTML);
         });
 
         window.onload = () => {
-            const salva = localStorage.getItem('minha_nota_v2');
-            if(salva) editor.innerHTML = salva;
+            editor.innerHTML = localStorage.getItem('nota_v3') || 'Pressione TAB para identar ou digite /n...';
         };
     </script>
 </body>
