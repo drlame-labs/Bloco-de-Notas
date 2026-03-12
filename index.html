@@ -99,7 +99,8 @@
     
         editor.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
-                e.preventDefault();
+                e.preventDefault(); 
+                
                 document.execCommand('insertHTML', false, '<span class="indent-tag" contenteditable="false">|></span>&nbsp;');
             }
         });
